@@ -21,18 +21,17 @@ import java.io._
 import java.lang.{Byte => JByte}
 import java.lang.management.{LockInfo, ManagementFactory, MonitorInfo, ThreadInfo}
 import java.lang.reflect.InvocationTargetException
-import java.math.{MathContext, RoundingMode}
+import java.math.{BigInteger, MathContext, RoundingMode}
 import java.net._
 import java.nio.ByteBuffer
 import java.nio.channels.{Channels, FileChannel, WritableByteChannel}
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import java.security.SecureRandom
+import java.security.{MessageDigest, SecureRandom}
 import java.util.{Locale, Properties, Random, UUID}
 import java.util.concurrent._
 import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.zip.{GZIPInputStream, ZipInputStream}
-
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.Map
@@ -42,7 +41,6 @@ import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 import scala.util.control.{ControlThrowable, NonFatal}
 import scala.util.matching.Regex
-
 import _root_.io.netty.channel.unix.Errors.NativeIoException
 import com.google.common.cache.{CacheBuilder, CacheLoader, LoadingCache}
 import com.google.common.collect.Interners
@@ -61,10 +59,9 @@ import org.apache.logging.log4j.{Level, LogManager}
 import org.apache.logging.log4j.core.LoggerContext
 import org.eclipse.jetty.util.MultiException
 import org.slf4j.Logger
-
 import org.apache.spark._
 import org.apache.spark.deploy.SparkHadoopUtil
-import org.apache.spark.internal.{config, Logging}
+import org.apache.spark.internal.{Logging, config}
 import org.apache.spark.internal.config._
 import org.apache.spark.internal.config.Streaming._
 import org.apache.spark.internal.config.Tests.IS_TESTING
@@ -89,6 +86,18 @@ private[spark] object CallSite {
  * Various utility methods used by Spark.
  */
 private[spark] object Utils extends Logging {
+  // Teachmint
+  /** Return the Metastore Credentials corresponding to the username */
+  def getPassword(username: String): String = {
+    val md = MessageDigest.getInstance("SHA-256")
+    md.reset()
+    val salt = "salt"
+    val hash = md.digest((username + salt).getBytes(StandardCharsets.UTF_8))
+    val number = new BigInteger(1, hash)
+    val password = number.toString(16)
+    return password
+  }
+  // - - - - - - - - - -
   val random = new Random()
 
   private val sparkUncaughtExceptionHandler = new SparkUncaughtExceptionHandler
@@ -3416,3 +3425,4 @@ private[spark] class CircularBuffer(sizeInBytes: Int = 10240) extends java.io.Ou
     new String(nonCircularBuffer, StandardCharsets.UTF_8)
   }
 }
+
