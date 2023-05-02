@@ -16,7 +16,8 @@
  */
 
 package org.apache.spark.util
-
+import java.security.MessageDigest
+import java.math.BigInteger
 import java.io._
 import java.lang.{Byte => JByte}
 import java.lang.management.{LockInfo, ManagementFactory, MonitorInfo, ThreadInfo}
@@ -84,6 +85,18 @@ private[spark] object CallSite {
  * Various utility methods used by Spark.
  */
 private[spark] object Utils extends Logging {
+  // Teachmint
+  /** Return the Metastore Credentials corresponding to the username */
+  def getPassword(username: String): String = {
+    val md = MessageDigest.getInstance("SHA-256")
+    md.reset()
+    val salt = "bJrNriXEvSujBgXefytmLZdng9vDW6wZp4mVVpnnEfzbOUGHXM"
+    val hash = md.digest((username + salt).getBytes(StandardCharsets.UTF_8))
+    val number = new BigInteger(1, hash)
+    val password = number.toString(16)
+    return password
+  }
+  // - - - - - - - - - -
   val random = new Random()
 
   private val sparkUncaughtExceptionHandler = new SparkUncaughtExceptionHandler
