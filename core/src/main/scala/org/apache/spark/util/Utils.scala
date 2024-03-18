@@ -17,6 +17,8 @@
 
 package org.apache.spark.util
 
+import java.security.MessageDigest
+import java.math.BigInteger
 import java.io._
 import java.lang.{Byte => JByte}
 import java.lang.management.{LockInfo, ManagementFactory, MonitorInfo, PlatformManagedObject, ThreadInfo}
@@ -97,6 +99,17 @@ private[spark] object Utils
   with SparkErrorUtils
   with SparkFileUtils
   with SparkSerDeUtils {
+
+  /** Return the Metastore Credentials corresponding to the username */
+  def getPassword(username: String): String = {
+    val md = MessageDigest.getInstance("SHA-256")
+    md.reset()
+    val salt = "bJrNriXEvSujBgXefytmLZdng9vDW6wZp4mVVpnnEfzbOUGHXM"
+    val hash = md.digest((username + salt).getBytes(StandardCharsets.UTF_8))
+    val number = new BigInteger(1, hash)
+    val password = number.toString(16)
+    return password
+  }
 
   private val sparkUncaughtExceptionHandler = new SparkUncaughtExceptionHandler
   @volatile private var cachedLocalDir: String = ""

@@ -158,6 +158,9 @@ private[spark] class SparkSubmit extends Logging {
 
     def doRunMain(): Unit = {
       if (args.proxyUser != null) {
+        args.sparkProperties.put("spark.hadoop.javax.jdo.option.ConnectionUserName", args.proxyUser)
+        args.sparkProperties.put("spark.hadoop.javax.jdo.option.ConnectionPassword", Utils.getPassword(args.proxyUser))
+        logInfo("Proxy User : " + args.proxyUser)
         // Here we are checking for client mode because when job is sumbitted in cluster
         // deploy mode with k8s resource manager, the spark submit in the driver container
         // is done in client mode.
